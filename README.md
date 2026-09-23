@@ -10,8 +10,11 @@ to run this
 
 
 
+##### SMPT setup
 Also create a new `.env` file and copy code from `.env.example`
 Then fill the SMTP credentials got from any email provider's website like [mailgun , mailtrap]
+
+
 
 
 
