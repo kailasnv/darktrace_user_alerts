@@ -6,7 +6,7 @@ These channels needs to be integrated later in the main project.
 
 to run this
 
-        python email_alert.py 
+        python main.py 
 
 
 
