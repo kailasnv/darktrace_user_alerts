@@ -1,8 +1,8 @@
 ### Email alerting module
 This program checks the avalibale ALERTS (currently hardcoded) and checks for any duplicates to remove them, and sort them based on its severity. This sorted alerts are then used to create EMAILS using different templates, and send using SMPT and any email client.
 
-Currenty this has nothing to do with SEVERITY_CHANNELS, only deals with EMAIL channel. but it will prints possible channels to activate like [sms, webhooks, etc.].
-These channels needs to be integrated later in the main project. 
+Currenty this will only deals with EMAIL from SEVERITY_CHANNELS, because other methods like [sms, webhooks, siem, etc] are not inegrated in this.
+These methods needs to be integrated later in the main project. 
 
 to run this
 

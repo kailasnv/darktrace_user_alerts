@@ -92,8 +92,12 @@ def send_email(alert):
  #(if SMTP not configured, just prints to stdout for dry-run testing)
     if not SMTP_HOST:
         print(f"\n\n[+] --- DRY RUN EMAIL [{alert['severity'].upper()}] ---")
-        print(f"[+] To: {EMAIL_TO}\nSubject: {subject}\n{body}\n")
+        print(f"To: {EMAIL_TO}\nSubject: {subject}\n{body}\n")
         return True
+
+    if not EMAIL_TO:
+        print(f"[FAILED] {alert['alert_id']} email error: EMAIL_TO is not set in .env")
+        return False
  
     try:
         msg = MIMEText(body)
@@ -129,8 +133,12 @@ def main():
  
         print(f"[+] Alert: {alert['alert_id']} [{alert['severity'].upper()}] "
               f"| channels: {channels}")
- 
-        send_email(alert)
+
+        if "email" in channels:
+            send_email(alert)
+        else:
+            print(f"[+] Skipping email for {alert['alert_id']} -- not in its channel list")
+
  
         print(f"====================================================================\n")
  
