@@ -22,7 +22,7 @@ Channels beyond email are listed for reference/task-allocation, but only email i
  -- everything else just prints what WOULD have been notified.
 """
 
-
+# Currently only email is implemented, but this dict shows what channels would be used for each severity level.
 SEVERITY_CHANNELS = {
     "critical": ["email", "webhook", "dashboard", "sms", "siem"],
     "high": ["email", "webhook", "dashboard"],
@@ -70,18 +70,11 @@ def dedupe_alerts(alerts):
 
  
 #Render email using templates
-"""Returns (subject, body) using the template for this alert's
-    severity. Relies on first_seen/last_seen being real datetime objects
-    (not strings) -- that's what makes the {first_seen:%Y-%m-%d %H:%M}
-    formatting above work."""
-
 def render_email(alert: dict) -> tuple[str, str]:
     template = EMAIL_TEMPLATES[alert["severity"]]
-    body = template.format(**alert)
+    body = template.format(**alert)  # **alert unpacks the dict into keyword arguments.
     subject = f"[{alert['severity'].upper()}] DarkTrace alert {alert['alert_id']}"
     return subject, body
- 
- 
  
 
 # send email. 
@@ -104,6 +97,7 @@ def send_email(alert):
  
     try:
         msg = MIMEText(body)
+        #Wraps your plain-text email body into a properly formatted email message object — MIMEText
         msg["Subject"] = subject
         msg["From"] = EMAIL_FROM
         msg["To"] = EMAIL_TO
@@ -132,16 +126,12 @@ def main():
  
     for alert in deduped:
         channels = SEVERITY_CHANNELS[alert["severity"]]
-        # other_channels = [c for c in channels if c != "email"]
  
         print(f"[+] Alert: {alert['alert_id']} [{alert['severity'].upper()}] "
               f"| channels: {channels}")
  
         send_email(alert)
  
-        # if other_channels:
-        #     print(f"  (would also notify via: {', '.join(other_channels)} "
-        #           f"-- not implemented in this demo)")
         print(f"====================================================================\n")
  
  
