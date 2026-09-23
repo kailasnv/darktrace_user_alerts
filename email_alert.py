@@ -3,6 +3,9 @@
 import os
 import smtplib
 from email.mime.text import MIMEText
+from dotenv import load_dotenv
+load_dotenv()
+
 
 from hardcoded_alerts import ALERTS  # hardcoded alerts for testing purposes
 from email_templates import EMAIL_TEMPLATES  # severity-specific email templates
@@ -81,18 +84,19 @@ def render_email(alert: dict) -> tuple[str, str]:
  
  
 
-# send email. --  (if not configured, just prints to stdout for dry-run testing)
+# send email. 
 SMTP_HOST = os.getenv("SMTP_HOST", "")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-EMAIL_FROM = os.getenv("EMAIL_FROM", "alerts@darktrace.local")
-EMAIL_TO = os.getenv("EMAIL_TO", "security-team@example.com")
+EMAIL_FROM = os.getenv("EMAIL_FROM", "")
+EMAIL_TO = os.getenv("EMAIL_TO", "")
  
  
 def send_email(alert):
     subject, body = render_email(alert)
- 
+
+ #(if SMTP not configured, just prints to stdout for dry-run testing)
     if not SMTP_HOST:
         print(f"\n\n[+] --- DRY RUN EMAIL [{alert['severity'].upper()}] ---")
         print(f"[+] To: {EMAIL_TO}\nSubject: {subject}\n{body}\n")
