@@ -7,3 +7,11 @@ These channels needs to be integrated later in the main project.
 to run this
 
         python email_alert.py 
+
+
+
+Also create a new `.env` file and copy code from `.env.example`
+Then fill the SMTP credentials got from any email provider's website like [mailgun , mailtrap]
+
+
+
