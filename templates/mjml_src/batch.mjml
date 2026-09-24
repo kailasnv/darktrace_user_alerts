@@ -1,0 +1,47 @@
+<mjml>
+  <mj-body background-color="#f4f4f4">
+    <mj-section background-color="#34495e" padding="16px">
+      <mj-column>
+        <mj-text color="#ffffff" font-size="18px" font-weight="bold" align="center">
+          {{ title }}
+        </mj-text>
+        <mj-text color="#dddddd" align="center" font-size="13px">
+          {{ alerts|length }} alert(s) in this batch
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="#ffffff" padding="16px">
+      <mj-column>
+        <mj-text>
+          <table style="width:100%; border-collapse:collapse; font-size:13px;">
+            <tr style="background:#f0f0f0;">
+              <th style="text-align:left;padding:6px;">Alert ID</th>
+              <th style="text-align:left;padding:6px;">Source</th>
+              <th style="text-align:left;padding:6px;">Confidence</th>
+              <th style="text-align:left;padding:6px;">Count</th>
+              <th style="text-align:left;padding:6px;">Status</th>
+            </tr>
+            {% for alert in alerts %}
+            <tr>
+              <td style="padding:6px;border-top:1px solid #ddd;">{{ alert.alert_id }}</td>
+              <td style="padding:6px;border-top:1px solid #ddd;">{{ alert.source_id }}</td>
+              <td style="padding:6px;border-top:1px solid #ddd;">{{ "%.0f"|format(alert.confidence * 100) }}%</td>
+              <td style="padding:6px;border-top:1px solid #ddd;">{{ alert.count }}</td>
+              <td style="padding:6px;border-top:1px solid #ddd;">{{ alert.state }}</td>
+            </tr>
+            {% endfor %}
+          </table>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding="10px">
+      <mj-column>
+        <mj-text align="center" color="#888888" font-size="12px">
+          -- DarkTrace Alerting System
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

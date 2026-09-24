@@ -1,0 +1,36 @@
+<mjml>
+  <mj-body background-color="#f4f4f4">
+    <mj-section background-color="#c0392b" padding="20px">
+      <mj-column>
+        <mj-text color="#ffffff" font-size="20px" font-weight="bold" align="center">
+          CRITICAL ALERT -- IMMEDIATE ACTION REQUIRED
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="#ffffff" padding="20px">
+      <mj-column>
+        <mj-table>
+          <tr><td style="padding:4px 0;"><strong>Alert ID:</strong></td><td>{{ alert_id }}</td></tr>
+          <tr><td style="padding:4px 0;"><strong>Fingerprint:</strong></td><td>{{ fingerprint }}</td></tr>
+          <tr><td style="padding:4px 0;"><strong>Source:</strong></td><td>{{ source_id }}</td></tr>
+          <tr><td style="padding:4px 0;"><strong>Watchlist:</strong></td><td>{{ watchlist_id }}</td></tr>
+          <tr><td style="padding:4px 0;"><strong>Confidence:</strong></td><td>{{ "%.0f"|format(confidence * 100) }}%</td></tr>
+          <tr><td style="padding:4px 0;"><strong>Occurrences:</strong></td><td>{{ count }}</td></tr>
+          <tr><td style="padding:4px 0;"><strong>Status:</strong></td><td>{{ state }}</td></tr>
+        </mj-table>
+        <mj-text padding-top="16px">
+          This requires immediate investigation. Acknowledge in the dashboard as soon as you've reviewed it.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding="10px">
+      <mj-column>
+        <mj-text align="center" color="#888888" font-size="12px">
+          -- DarkTrace Alerting System
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
