@@ -8,6 +8,7 @@ These methods needs to be integrated later in the main project.
 Also, this project uses Celery + Redis for background email sending — Redis queues the jobs, Celery's worker sends them (including delayed sends for batching/digests) without blocking the main script.
 
 Implemented Jinja2 templating engine + MJML for building HTML emails that actually render correctly across Outlook/Gmail/Apple Mail
+
 ----
 ### To run this program: 
 start Redis (if not already running):  -- (please use multiple terminals for this)
