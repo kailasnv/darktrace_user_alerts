@@ -25,9 +25,9 @@ Run the main script:
 
 ----
 ### Result
-The critical + High alerts are immediatly send. (duplicates are removed)
-Medium alerts are Batched and send after a certain delay (now its set to 5min demo)
-Low + informational alerts are Batched and send after a certain delay (demo set to 1minutes)
+- The critical + High alerts are immediatly send. (duplicates are removed)
+- Medium alerts are Batched and send after a certain delay (now its set to 5min demo)
+- Low + informational alerts are Batched and send after a certain delay (demo set to 1minutes)
 
 -----
 ### SMPT setup
