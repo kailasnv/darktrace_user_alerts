@@ -1,3 +1,11 @@
+"""
+Hardcoded alerts matching the Alert model's exact columns:
+alert_id, fingerprint, source_id, watchlist_id, severity, confidence,
+state, first_seen, last_seen, count.
+
+Includes two intentional duplicates (alr_002 shares alr_001's
+fingerprint) so dedup logic has something real to merge.
+"""
 from datetime import datetime, timezone
 
 ALERTS = [

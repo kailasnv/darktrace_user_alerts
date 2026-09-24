@@ -1,16 +1,9 @@
-""" Email alerting module """
-
-import os
-import smtplib
-from email.mime.text import MIMEText
-from dotenv import load_dotenv
-load_dotenv()
-
-
 from hardcoded_alerts import ALERTS  # hardcoded alerts for testing purposes
-from email_templates import EMAIL_TEMPLATES  # severity-specific email templates
-
-
+from tasks import (
+    send_immediate_email_task,
+    send_batched_medium_task,
+    send_daily_digest_task,
+)
 
 
 
@@ -31,6 +24,11 @@ SEVERITY_CHANNELS = {
     "informational": ["email", "dashboard"],
 }
 
+
+#EMAIL DELAYS
+MEDIUM_BATCH_DELAY_SECONDS = 300 # How long to wait before sending each batch- 5min=300s
+DIGEST_DELAY_SECONDS = 60  # demo value, not a real "once a day" delay
+ 
 
 # deduplication function for alerts
 def dedupe_alerts(alerts):
@@ -69,80 +67,59 @@ def dedupe_alerts(alerts):
 
 
  
-#Render email using templates
-def render_email(alert: dict) -> tuple[str, str]:
-    template = EMAIL_TEMPLATES[alert["severity"]]
-    body = template.format(**alert)  # **alert unpacks the dict into keyword arguments.
-    subject = f"[{alert['severity'].upper()}] DarkTrace alert {alert['alert_id']}"
-    return subject, body
- 
 
-# send email. 
-SMTP_HOST = os.getenv("SMTP_HOST", "")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER", "")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-EMAIL_FROM = os.getenv("EMAIL_FROM", "")
-EMAIL_TO = os.getenv("EMAIL_TO", "")
- 
- 
-def send_email(alert):
-    subject, body = render_email(alert)
-
- #(if SMTP not configured, just prints to stdout for dry-run testing)
-    if not SMTP_HOST:
-        print(f"\n\n[+] --- DRY RUN EMAIL [{alert['severity'].upper()}] ---")
-        print(f"To: {EMAIL_TO}\nSubject: {subject}\n{body}\n")
-        return True
-
-    if not EMAIL_TO:
-        print(f"[FAILED] {alert['alert_id']} email error: EMAIL_TO is not set in .env")
-        return False
- 
-    try:
-        msg = MIMEText(body)
-        #Wraps your plain-text email body into a properly formatted email message object — MIMEText
-        msg["Subject"] = subject
-        msg["From"] = EMAIL_FROM
-        msg["To"] = EMAIL_TO
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.sendmail(EMAIL_FROM, [EMAIL_TO], msg.as_string())
-
-        print(f"[sent] {alert['alert_id']} ({alert['severity']}) email delivered.")
-        return True
-    except Exception as exc:
-        print(f"[FAILED] {alert['alert_id']} email error: {exc}")
-        return False
- 
- 
- 
 def main():
     print(f"[+] Starting with {len(ALERTS)} raw alerts.\n")
  
     deduped = dedupe_alerts(ALERTS)
     print(f"[+] {len(deduped)} unique alerts after dedup.\n")
      
- 
     # Most urgent first -- sort based on severity rank.
     deduped.sort(key=lambda a: SEVERITY_RANK[a["severity"]])
- 
+
+
+    medium_batch = []
+    digest_batch = []
     for alert in deduped:
         channels = SEVERITY_CHANNELS[alert["severity"]]
  
         print(f"[+] Alert: {alert['alert_id']} [{alert['severity'].upper()}] "
               f"| channels: {channels}")
 
-        if "email" in channels:
-            send_email(alert)
-        else:
+        if "email" not in channels:
             print(f"[+] Skipping email for {alert['alert_id']} -- not in its channel list")
+            print(f"====================================================================\n")
+            continue
 
+        # logic for sending email based on severity
+        if alert["severity"] in ("critical", "high"):
+            send_immediate_email_task.delay(alert)
+            print(f"[+] Queued immediate email for {alert['alert_id']}")
+        elif alert["severity"] == "medium":
+            medium_batch.append(alert)
+            print(f"[+] Added {alert['alert_id']} to the medium batch")
+        else: # for low / informational
+            digest_batch.append(alert)
+            print(f"[+] Added {alert['alert_id']} to the digest batch")
  
         print(f"====================================================================\n")
+
+
+    if medium_batch:
+        send_batched_medium_task.apply_async(
+            args=[medium_batch], countdown=MEDIUM_BATCH_DELAY_SECONDS
+        )
+        print(f"[+] Scheduled batched medium email for {len(medium_batch)} "
+              f"alert(s) in {MEDIUM_BATCH_DELAY_SECONDS}s")
+ 
+    if digest_batch:
+        send_daily_digest_task.apply_async(
+            args=[digest_batch], countdown=DIGEST_DELAY_SECONDS
+        )
+        print(f"[+] Scheduled digest email for {len(digest_batch)} alert(s) "
+              f"in {DIGEST_DELAY_SECONDS}s (demo delay -- production would use "
+              f"Celery Beat on a fixed daily schedule instead)")
  
  
 if __name__ == "__main__":
     main()
- 

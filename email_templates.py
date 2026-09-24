@@ -1,10 +1,8 @@
 """
 Severity-specific email templates -- different tone/urgency/detail level
-per severity, matching the actual Alert model's fields (alert_id,
+per severity, matching the actual Alert model's fields: (alert_id,
 fingerprint, source_id, watchlist_id, severity, confidence, state,
-first_seen, last_seen, count). No free-text summary field exists on
-this model, so templates describe the alert using its IDs and
-timestamps instead.
+first_seen, last_seen, count). 
 """
 
 EMAIL_TEMPLATES = {
@@ -52,7 +50,7 @@ EMAIL_TEMPLATES = {
         "-- DarkTrace Alerting System"
     ),
     "informational": (
-        "Informational Item\n\n"
+        "FYI -- Informational Item\n\n"
         "{alert_id}: {count} occurrence(s) from {source_id} "
         "(watchlist {watchlist_id})\n"
         "-- DarkTrace Alerting System"
@@ -60,3 +58,12 @@ EMAIL_TEMPLATES = {
 }
 
 
+def render_email(alert: dict) -> tuple[str, str]:
+    """Returns (subject, body) using the template for this alert's
+    severity. Relies on first_seen/last_seen being real datetime objects
+    (not strings) -- that's what makes the {first_seen:%Y-%m-%d %H:%M}
+    formatting above work."""
+    template = EMAIL_TEMPLATES[alert["severity"]]
+    body = template.format(**alert)
+    subject = f"[{alert['severity'].upper()}] DarkTrace alert {alert['alert_id']}"
+    return subject, body
