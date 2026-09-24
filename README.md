@@ -2,7 +2,7 @@
 
 ## Status
 
-🚧 **In Progress — Development / Integration**
+**In Progress — Development / Integration**
 
 The User Alerting Webhook POD is currently under active development.
 
