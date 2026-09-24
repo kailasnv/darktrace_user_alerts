@@ -1,1 +1,1 @@
-Each alerting methods are using different Branches.
+Check other Branches to see the alerting methods.
