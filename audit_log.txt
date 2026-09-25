@@ -1,0 +1,5 @@
+[2026-09-25 08:45:27 UTC] [SUCCESS] channel=email | [CRITICAL] alr_001 | subject=[CRITICAL] DarkTrace alert alr_001 | detail=dry-run (no SMTP configured)
+[2026-09-25 08:45:27 UTC] [SUCCESS] channel=email | [CRITICAL] alr_003 | subject=[CRITICAL] DarkTrace alert alr_003 | detail=dry-run (no SMTP configured)
+[2026-09-25 08:45:27 UTC] [SUCCESS] channel=email | [HIGH] alr_004 | subject=[HIGH] DarkTrace alert alr_004 | detail=dry-run (no SMTP configured)
+[2026-09-25 08:45:27 UTC] [SUCCESS] channel=email | [HIGH] alr_005 | subject=[HIGH] DarkTrace alert alr_005 | detail=dry-run (no SMTP configured)
+[2026-09-25 08:45:27 UTC] [SUCCESS] channel=email | [HIGH] alr_006 | subject=[HIGH] DarkTrace alert alr_006 | detail=dry-run (no SMTP configured)
