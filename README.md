@@ -48,10 +48,8 @@ install these
         pip install jinja2
         pip install dotenv
 
-Start these:
+Check if redis is running: this will show PONG if its running:
 
-        redis-server --daemonize yes
-        celery -A celery_app worker --loglevel=info
         redis-cli ping
 
 To wipes any stale queued tasks or old task results sitting in Redis, without shutting the server down.
