@@ -1,262 +1,970 @@
-# Alert Logic & STIX/TAXII Export
+<div align="center">
 
-Owns the decision layer between enriched threat findings (e.g. from a DarkTrace-fed
-enrichment/NLP pipeline) and every downstream notification channel, plus the
-independent conversion of that intelligence into STIX 2.1 / TAXII 2.1 for external
-security platforms.
+# 🛡️ Alert Logic & STIX/TAXII Export
 
+### 🚨 From an enriched threat finding to a prioritized, explainable security alert
+
+<p>
+  <img src="https://img.shields.io/badge/Python-3.x-3776AB?style=for-the-badge&logo=python&logoColor=white">
+  <img src="https://img.shields.io/badge/FastAPI-API-009688?style=for-the-badge&logo=fastapi&logoColor=white">
+  <img src="https://img.shields.io/badge/STIX-2.1-7B61FF?style=for-the-badge">
+  <img src="https://img.shields.io/badge/TAXII-2.1-EF4444?style=for-the-badge">
+  <img src="https://img.shields.io/badge/Celery-Background%20Jobs-37814A?style=for-the-badge&logo=celery&logoColor=white">
+  <img src="https://img.shields.io/badge/Pytest-Tested-0A9B5E?style=for-the-badge&logo=pytest&logoColor=white">
+</p>
+
+**Decision layer • Risk scoring • Alert lifecycle • Routing • Escalation • STIX/TAXII**
+
+</div>
+
+---
+
+## ✨ What is this?
+
+This module sits between an **enriched threat-intelligence finding** and downstream security systems.
+
+It takes structured intelligence, evaluates its risk, decides the alert severity and routing, manages the alert lifecycle, and — when policy allows — converts the intelligence into **STIX 2.1** and publishes it through **TAXII 2.1**.
+
+> 🎯 **Core idea:** turn raw/enriched threat intelligence into an explainable, standardized, actionable security alert.
+
+---
+
+## 🧭 The Complete Pipeline
+
+```mermaid
+flowchart LR
+    A["🧠 Enriched Finding"] --> B["📊 9-Signal Risk Scoring"]
+    B --> C["🚦 Severity"]
+    C --> D["♻️ Deduplication"]
+    D --> E["🔗 Correlation"]
+    E --> F["🔇 Suppression"]
+    F --> G["🔄 Lifecycle"]
+    G --> H["📢 Routing"]
+    H --> I["⏱️ Escalation"]
+    I --> J["🚨 Standardized Alert"]
+
+    J --> K["📨 Notification Channels"]
+    J --> L["🧩 HITL / Export Policy"]
+
+    L --> M["🧱 STIX 2.1 Bundle"]
+    M --> N["🌐 TAXII 2.1"]
+    N --> O["🛡️ External Security Platform"]
 ```
-Enriched Finding → Risk (9 signals) → Severity → Dedup → Correlation → Suppression → Lifecycle → Routing → Escalation → Alert
-Alert (Medium/High → HITL approval, Critical → auto-approved) → STIX 2.1 Mapping → Bundle → TAXII 2.1 → External Security Platform
-```
 
-## Project layout
+### 🔥 Separation of responsibilities
 
-```
+| Layer | What it does |
+|---|---|
+| 🧠 Finding | Receives enriched threat intelligence |
+| 📊 Risk | Calculates a 0–100 risk score |
+| 🚦 Severity | Converts score into severity |
+| ♻️ Dedup | Prevents repeated alerts |
+| 🔗 Correlation | Links related alerts |
+| 🔇 Suppression | Applies temporary suppression rules |
+| 🔄 Lifecycle | Tracks alert state |
+| 📢 Routing | Decides notification channels |
+| ⏱️ Escalation | Escalates unacknowledged high-priority alerts |
+| 🧩 STIX/TAXII | Standardizes and exports threat intelligence |
+
+> ⚠️ **This module makes routing decisions. It does not directly deliver email, SMS, webhook, SIEM or dashboard notifications.**
+
+---
+
+# 📁 Project Structure
+
+```text
 alert_engine/
-  config.py          9-signal risk weights, severity thresholds, dedup window,
-                      routing policy, escalation policy, STIX/TAXII HITL policy
-  models.py           EnrichedFinding, RiskSignals, Indicator, Alert,
-                       StixExportStatus, RoutingDecision, SuppressionRule
-  db.py                SQLAlchemy engine/session + ORM tables
-  fingerprint.py       stable alert fingerprint
-  risk.py              explainable 0-100 risk scoring from the nine finalized
-                        signal families, with per-signal upstream override
-                        and neutral-default fallback
-  severity.py          score -> severity, tenant-configurable thresholds
-  dedup.py             24h (configurable) duplicate detection
-  correlation.py         cross-alert correlation via shared threat actor or
-                          shared indicators (IOCs), independent of dedup/tenant scope
-  suppression.py        scope/reason/expiry suppression rule matching
-  lifecycle.py          alert state machine
-  hitl.py                 STIX/TAXII export policy gate (severity -> export status)
-  routing.py             severity -> channel policy
-  escalation.py           unacknowledged/high-priority escalation with time intervals
-  engine.py                evaluate_alerts(enriched) orchestrator (Interface 1 + 2)
-  celery_app.py            periodic escalation scan task
-  api.py                   FastAPI endpoints, including STIX export approve/reject
-  stix/
-    mapping.py             STIX 2.1 Indicator / Observed Data / Threat Actor / Relationship mapping
-    bundle.py               STIX 2.1 bundle construction
-    taxii_client.py          TLS-verified, retrying TAXII 2.1 client
-    export.py                mapping -> bundle -> publish -> audit orchestration,
-                              gated on stix_export_status == APPROVED/EXPORTED/FAILED
-  tests/                     pytest suite covering the full checklist
-mock_data.py                  mock findings for standalone development
-demo.py                        runnable end-to-end example
-migrations/                    Alembic environment wired to the SQLAlchemy metadata
+│
+├── ⚙️ config.py
+├── 📦 models.py
+├── 🗄️ db.py
+├── 🔑 fingerprint.py
+│
+├── 📊 risk.py
+├── 🚦 severity.py
+├── ♻️ dedup.py
+├── 🔗 correlation.py
+├── 🔇 suppression.py
+├── 🔄 lifecycle.py
+├── 👤 hitl.py
+├── 📢 routing.py
+├── ⏱️ escalation.py
+├── 🧠 engine.py
+├── ⚙️ celery_app.py
+├── 🌐 api.py
+│
+├── 🧩 stix/
+│   ├── mapping.py
+│   ├── bundle.py
+│   ├── taxii_client.py
+│   └── export.py
+│
+├── 🧪 tests/
+├── 🧰 mock_data.py
+├── 🎬 demo.py
+└── 🗃️ migrations/
 ```
 
-## Setup
+---
+
+# 🧠 Input → Processing → Output
+
+## 1️⃣ INPUT — Enriched Finding
+
+The module expects an **enriched finding** from the upstream NLP/enrichment/matching pipeline.
+
+### Minimum useful structure
+
+```json
+{
+  "finding_id": "TEST-HIGH-001",
+  "source_id": "darktrace",
+  "title": "Suspicious credential activity",
+  "description": "Credential-related activity detected",
+  "language": "en",
+  "threat_type": "unauthorized_access",
+  "classification": "credential_compromise",
+  "entities": [
+    {
+      "type": "account",
+      "value": "admin-test"
+    }
+  ],
+  "indicators": [
+    {
+      "type": "email",
+      "value": "admin@test.example"
+    }
+  ],
+  "watchlist_hits": [
+    "admin-test"
+  ],
+  "threat_score": 0.80,
+  "confidence": 0.90,
+  "feature_vector": {}
+}
+```
+
+### 🧩 Optional explicit risk signals
+
+```json
+{
+  "signals": {
+    "keyword": 0.75,
+    "classification": 0.75,
+    "entities": 0.75,
+    "history": 0.60,
+    "behavior": 0.70,
+    "temporal": 0.60,
+    "feedback": 0.60
+  }
+}
+```
+
+If an upstream signal is not supplied, the engine uses a **neutral value of `0.5`**.
+
+---
+
+# 📊 9-Signal Risk Engine
+
+The risk engine combines nine signal families.
+
+| Signal | Weight |
+|---|---:|
+| 🔎 Keyword | 22% |
+| 🧠 Classification | 24% |
+| 👤 Entities | 10% |
+| 🕘 History | 10% |
+| ⭐ Source reputation | 10% |
+| 🧬 Behavior | 8% |
+| ⏰ Temporal | 4% |
+| 👨‍💻 Analyst feedback | 8% |
+| 🎯 Confidence | 4% |
+| **TOTAL** | **100%** |
+
+The result is normalized to:
+
+```text
+0 ──────────────────────────────── 100
+Low Risk                         High Risk
+```
+
+The engine also produces a **risk breakdown**, making the score explainable instead of returning only a number.
+
+---
+
+# 🚦 Severity Model
+
+```text
+0 ───── 24     🟦 INFORMATIONAL
+25 ──── 44     🟢 LOW
+45 ──── 64     🟡 MEDIUM
+65 ──── 84     🟠 HIGH
+85 ─── 100     🔴 CRITICAL
+```
+
+| Score | Severity | Meaning |
+|---:|---|---|
+| 0–24 | 🟦 Informational | Low-priority information |
+| 25–44 | 🟢 Low | Low-risk finding |
+| 45–64 | 🟡 Medium | Requires attention |
+| 65–84 | 🟠 High | High-priority alert |
+| 85–100 | 🔴 Critical | Critical-priority alert |
+
+> Thresholds are configurable and can be tenant-specific.
+
+---
+
+# 📢 Alert Routing
+
+Severity determines the default notification routing.
+
+| Severity | Channels |
+|---|---|
+| 🟦 Informational | `batch_digest` |
+| 🟢 Low | `batch_digest` + `dashboard` |
+| 🟡 Medium | `dashboard` + `email` |
+| 🟠 High | `dashboard` + `email` + `webhook` |
+| 🔴 Critical | `dashboard` + `email` + `webhook` + `sms_push` + `siem` + `on_call` |
+
+### Important
+
+```text
+STIX/TAXII ≠ notification routing
+```
+
+STIX/TAXII is controlled independently by the export/HITL policy.
+
+---
+
+# ♻️ Deduplication
+
+The engine creates a stable alert fingerprint.
+
+Default:
+
+```text
+24 hours
+```
+
+Configuration:
+
+```env
+ALERT_DEDUP_WINDOW_HOURS=24
+```
+
+Conceptually:
+
+```text
+Finding A ──┐
+Finding B ──┼──► Same Fingerprint ──► Existing Alert
+Finding C ──┘
+```
+
+This prevents the same underlying event from generating unnecessary duplicate alerts.
+
+---
+
+# 🔗 Correlation
+
+Alerts can be related through:
+
+- 👤 Shared threat actor
+- 🔑 Shared indicators / IOCs
+
+Example:
+
+```text
+Finding A ──► Actor X ──► Alert A
+Finding B ──► Actor X ──► Alert B
+                         │
+                         ▼
+                  Related Alerts
+```
+
+Correlation is separate from deduplication.
+
+---
+
+# 🔇 Suppression
+
+Suppression rules can contain:
+
+```text
+Scope
+Reason
+Expiration
+```
+
+Example:
+
+```text
+Rule:
+    Scope      → test-environment
+    Reason     → authorized security testing
+    Expires    → configured expiration
+```
+
+Expired suppression rules should no longer suppress alerts.
+
+---
+
+# 🔄 Alert Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> New
+    New --> Acknowledged
+    New --> Investigating
+    New --> Escalated
+    New --> Dismissed
+    New --> Closed
+
+    Acknowledged --> Investigating
+    Acknowledged --> Escalated
+    Acknowledged --> Dismissed
+    Acknowledged --> Closed
+
+    Investigating --> Escalated
+    Investigating --> Dismissed
+    Investigating --> Closed
+
+    Escalated --> Investigating
+    Escalated --> Dismissed
+    Escalated --> Closed
+
+    Dismissed --> Closed
+```
+
+### State aliases
+
+```text
+dismissed → False Positive
+closed    → Resolved
+```
+
+The implementation keeps six explicit lifecycle states:
+
+```text
+new
+acknowledged
+investigating
+escalated
+dismissed
+closed
+```
+
+---
+
+# ⏱️ Escalation
+
+### 🔴 Critical
+
+```text
+First escalation  → 15 minutes
+Repeat escalation → 30 minutes
+Maximum           → 5
+```
+
+### 🟠 High
+
+```text
+First escalation  → 60 minutes
+Repeat escalation → 120 minutes
+Maximum           → 3
+```
+
+Conceptually:
+
+```text
+New Alert
+   │
+   ├── Acknowledged ──► Stop escalation
+   │
+   └── Not acknowledged
+             │
+             ▼
+        ⏱️ Escalate
+             │
+             ▼
+        ⏱️ Repeat
+             │
+             ▼
+        Maximum reached
+```
+
+---
+
+# 🚨 Standardized Alert Output
+
+The central output is a standardized **Alert** object.
+
+### Output structure
+
+```text
+🚨 Alert
+│
+├── 🆔 alert_id
+├── 🔑 fingerprint
+├── 🔗 finding_id
+├── 📡 source_id
+├── 👁️ watchlist_id
+├── 🚦 severity
+├── 📊 risk_score
+├── 🎯 confidence
+├── 🔄 state
+├── 🕐 first_seen
+├── 🕐 last_seen
+├── 🔢 count
+├── 📢 channels
+├── 🧠 risk_breakdown
+├── 🔗 related_alert_ids
+└── 🧩 stix_export_status
+```
+
+### Example
+
+```json
+{
+  "alert_id": "ALT-001",
+  "fingerprint": "abc123...",
+  "finding_id": "TEST-HIGH-001",
+  "source_id": "darktrace",
+  "severity": "high",
+  "risk_score": 74,
+  "confidence": 0.80,
+  "state": "new",
+  "count": 1,
+  "channels": [
+    "dashboard",
+    "email",
+    "webhook"
+  ],
+  "risk_breakdown": {
+    "keyword": 0.75,
+    "classification": 0.75,
+    "entities": 0.75,
+    "history": 0.60,
+    "behavior": 0.70,
+    "temporal": 0.60,
+    "feedback": 0.60
+  },
+  "related_alert_ids": [],
+  "stix_export_status": "pending_approval"
+}
+```
+
+---
+
+# 🧩 STIX 2.1 + TAXII 2.1
+
+When export is permitted:
+
+```text
+🚨 Alert
+   │
+   ▼
+🧩 STIX 2.1 Mapping
+   │
+   ├── Indicator
+   ├── Observed Data
+   ├── Threat Actor
+   └── Relationship
+   │
+   ▼
+📦 STIX Bundle
+   │
+   ▼
+🌐 TAXII 2.1
+   │
+   ▼
+🛡️ External Security Platform
+```
+
+### Export policy
+
+| Severity | STIX/TAXII policy |
+|---|---|
+| 🟦 Informational | ❌ Excluded |
+| 🟢 Low | ❌ Excluded |
+| 🟡 Medium | 👤 HITL approval |
+| 🟠 High | 👤 HITL approval |
+| 🔴 Critical | ⚡ Auto-approved |
+
+> A real TAXII server is required only for external publication.
+
+---
+
+# 👤 HITL Approval
+
+Medium and High alerts require human approval before external STIX/TAXII publication.
+
+### Approve
+
+```http
+POST /v1/alerts/{alert_id}/stix-export/approve
+X-Actor-ID: analyst-001
+```
+
+### Reject
+
+```http
+POST /v1/alerts/{alert_id}/stix-export/reject
+X-Actor-ID: analyst-001
+```
+
+Approval immediately attempts export.
+
+Rejection records the decision without publishing the bundle.
+
+---
+
+# 🌐 API
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/v1/findings` | Ingest enriched finding |
+| `GET` | `/v1/alerts/{alert_id}` | Retrieve alert |
+| `POST` | `/v1/alerts/{alert_id}/stix-export/approve` | Approve STIX export |
+| `POST` | `/v1/alerts/{alert_id}/stix-export/reject` | Reject STIX export |
+| `GET` | `/healthz` | Health check |
+
+Interactive API documentation:
+
+```text
+/docs
+/openapi.json
+```
+
+---
+
+# ⚙️ Configuration
+
+```env
+ALERT_ENGINE_DB_URL=sqlite:///./alert_engine.db
+ALERT_ENGINE_INGEST_API_KEY=change-this-key
+
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/1
+
+TAXII_DISCOVERY_URL=
+TAXII_API_ROOT=
+TAXII_COLLECTION_ID=
+TAXII_USERNAME=
+TAXII_PASSWORD=
+
+TAXII_VERIFY_TLS=true
+TAXII_TIMEOUT_SECONDS=15
+TAXII_MAX_RETRIES=3
+
+ALERT_DEDUP_WINDOW_HOURS=24
+```
+
+### 🔐 Where do TAXII values come from?
+
+These values come from the **TAXII server / threat-intelligence platform** you connect to.
+
+```text
+TAXII_API_ROOT
+        ↓
+Your TAXII server API root
+
+TAXII_COLLECTION_ID
+        ↓
+The collection where STIX objects are published
+
+TAXII_USERNAME / PASSWORD
+        ↓
+Credentials issued by that TAXII server
+```
+
+If no TAXII server is available, keep these values empty and test the complete alert pipeline without external publication.
+
+---
+
+# 🛠️ Technology Stack
+
+| Area | Technology |
+|---|---|
+| 🐍 Language | Python |
+| 🌐 API | FastAPI |
+| ✅ Validation | Pydantic |
+| 🗄️ Database | SQLite / SQLAlchemy |
+| ⚙️ Background jobs | Celery |
+| 📨 Broker | Redis |
+| 🧩 Threat intelligence | STIX 2.1 |
+| 🌐 Transport | TAXII 2.1 |
+| 🔗 HTTP | Requests |
+| 🧪 Testing | Pytest |
+| 🗃️ Migrations | Alembic |
+
+---
+
+# 🚀 Installation
+
+## Windows
+
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+## Linux / macOS
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate          # .venv\Scripts\activate on Windows
+source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env                # fill in TAXII + API key values
 ```
 
-## Run the test suite
+---
+
+# ▶️ Run the API
+
+```bash
+uvicorn alert_engine.api:app --reload --port 8001
+```
+
+Then open:
+
+```text
+http://localhost:8001/docs
+```
+
+> `8001` is used in the current development setup.
+
+---
+
+# 🧪 Testing
+
+Run:
 
 ```bash
 pytest
 ```
 
-54 tests cover: risk scoring across all nine signal families (weight-sum
-validation, upstream override vs. neutral-default fallback, per-signal
-breakdown), severity boundaries (including tenant overrides), fingerprint
-stability, deduplication (in-window and out-of-window), correlation (shared
-threat actor across tenants, shared indicator, no false positives), suppression
-(active and expired rules), lifecycle transitions, routing per severity, HITL
-export-approval gating (auto-approve/require-approval/not-required per
-severity, approve/reject transitions, illegal-transition errors), escalation
-timing and repeat/limit behavior, STIX 2.1 mapping and pattern correctness,
-bundle validity, TAXII publish success/failure/retry auditing, and full
-mock-finding-to-TAXII-export integration tests for both the auto-approved
-(critical) and HITL-gated (high) paths.
+The test suite covers:
 
-## Run the demo
+```text
+✅ Nine-signal risk scoring
+✅ Risk breakdown
+✅ Severity boundaries
+✅ Tenant severity overrides
+✅ Fingerprint stability
+✅ Deduplication
+✅ Correlation
+✅ Suppression
+✅ Lifecycle transitions
+✅ Routing
+✅ HITL approval
+✅ HITL rejection
+✅ Escalation
+✅ STIX mapping
+✅ STIX patterns
+✅ STIX bundle validity
+✅ TAXII publish success/failure
+✅ TAXII retry behavior
+✅ Export auditing
+✅ Critical auto-approval
+✅ High-severity HITL flow
+```
+
+---
+
+# 🧪 Example Test Scenarios
+
+## 🟠 High-signal test
+
+```json
+{
+  "finding_id": "TEST-HIGH-SIGNALS-001",
+  "threat_type": "unauthorized_access",
+  "confidence": 0.80,
+  "source_id": "darktrace",
+  "indicators": [
+    {
+      "type": "ip",
+      "value": "203.0.113.42"
+    },
+    {
+      "type": "credential",
+      "value": "svc-admin@example.com"
+    }
+  ],
+  "signals": {
+    "keyword": 0.75,
+    "classification": 0.75,
+    "entities": 0.75,
+    "history": 0.60,
+    "behavior": 0.70,
+    "temporal": 0.60,
+    "feedback": 0.60
+  }
+}
+```
+
+Expected processing:
+
+```text
+Risk
+ ↓
+High severity
+ ↓
+dashboard + email + webhook
+ ↓
+HITL required for STIX/TAXII
+```
+
+---
+
+## 🔴 Critical test
+
+```json
+{
+  "finding_id": "TEST-CRITICAL-SIGNALS-001",
+  "threat_type": "ransomware",
+  "confidence": 0.95,
+  "source_id": "darktrace",
+  "indicators": [
+    {
+      "type": "email",
+      "value": "admin@example.com"
+    },
+    {
+      "type": "ip",
+      "value": "198.51.100.23"
+    },
+    {
+      "type": "file_hash",
+      "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "signals": {
+    "keyword": 0.95,
+    "classification": 0.97,
+    "entities": 0.90,
+    "history": 0.70,
+    "behavior": 0.85,
+    "temporal": 0.60,
+    "feedback": 0.55
+  }
+}
+```
+
+Expected policy flow:
+
+```text
+🔴 Critical
+     ↓
+⚡ Auto-approved
+     ↓
+🧩 STIX 2.1 Bundle
+     ↓
+🌐 TAXII 2.1
+```
+
+A configured and reachable TAXII server is required for successful external publication.
+
+---
+
+# 📴 Testing Without TAXII
+
+You can test almost the entire alert engine without a TAXII server.
+
+```text
+Input
+ ↓
+Risk
+ ↓
+Severity
+ ↓
+Dedup
+ ↓
+Correlation
+ ↓
+Suppression
+ ↓
+Lifecycle
+ ↓
+Routing
+ ↓
+Escalation
+ ↓
+🚨 Alert
+```
+
+Only this final path requires a real TAXII service:
+
+```text
+Alert
+ ↓
+STIX Bundle
+ ↓
+TAXII Publication
+```
+
+---
+
+# 🎬 Demo
+
+Run:
 
 ```bash
 python demo.py
 ```
 
-Prints a standardized Alert payload (including its risk breakdown, related
-alert IDs, and STIX export status) and the STIX 2.1 bundle for a mock
-ransomware finding, using no network or external services.
+The demo generates a mock ransomware finding and demonstrates the alert-processing pipeline.
 
-## Interface 1 — input contract
+---
 
-`evaluate_alerts()` accepts either a dict or an `EnrichedFinding`. Required
-fields: `finding_id`, `threat_type`, `confidence` (0-1), `source_id`, and an
-`indicators` list of `{type, value}`. Optional: `watchlist_id`, `tenant_id`,
-`threat_actor`, `context`, and `signals` — see "Risk scoring" below. This
-module does not assume the upstream team's exact field names beyond this
-contract — adjust `EnrichedFinding` in `models.py` once the real enrichment
-payload is confirmed.
+# 🔐 Security
 
-## Risk scoring — nine finalized signal families
+### HTTPS
 
-`risk.py` scores every finding against the finalized signal catalogue and
-weights:
+TAXII communication requires HTTPS.
 
-| Signal | Weight | Upstream field | Fallback when not supplied |
-|---|---|---|---|
-| keyword | 0.22 | `signals.keyword` | neutral 0.5 |
-| classification | 0.24 | `signals.classification` | derived from `threat_type` via `THREAT_TYPE_WEIGHTS` |
-| entities | 0.10 | `signals.entities` | derived from indicator type/volume |
-| history | 0.10 | `signals.history` | neutral 0.5 |
-| source_reputation | 0.10 | `signals.source_reputation` | looked up from `SOURCE_REPUTATION_SCORES` by `source_id` |
-| behavior | 0.08 | `signals.behavior` | neutral 0.5 |
-| temporal | 0.04 | `signals.temporal` | simple off-hours heuristic on `observed_at` |
-| feedback | 0.08 | `signals.feedback` | neutral 0.5 |
-| confidence | 0.04 | `finding.confidence` (required, not part of `signals`) | — |
-
-This means the engine does **not** require every upstream feature (keyword
-matching, behavioral analytics, analyst-feedback loop, etc.) to exist yet —
-any signal the enrichment pipeline hasn't implemented simply falls back to a
-neutral 0.5 contribution until it's wired up. `compute_risk_breakdown()`
-returns the per-signal contribution alongside the total score for
-explainability, and is carried on `Alert.risk_breakdown` for audit/analyst
-review.
-
-## Correlation
-
-`correlation.py` links alerts that share a **threat actor** or **overlapping
-indicators (IOCs)**, independent of tenant and dedup scoping — the same actor
-targeting two different companies still correlates:
-
-```
-Finding A → Actor X → Company A
-Finding B → Actor X → Company B
-        ↓
-same actor/entity → related alerts
+```env
+TAXII_VERIFY_TLS=true
 ```
 
-`evaluate_alerts()` populates `Alert.related_alert_ids` on every call. This
-is intentionally a simple relational lookup (matching `threat_actor_name` and
-indicator-value overlap against recent `AlertRecord`s), not a full graph
-engine — see "Extending" if a heavier correlation/graph layer is wanted later.
+### Secrets
 
-## STIX/TAXII export — HITL policy gate
+Never commit these to source control:
 
-STIX/TAXII export is no longer "export for every unsuppressed alert." It is a
-policy decision driven by severity, via `Alert.stix_export_status`
-(`hitl.py`):
-
-```
-Alert
- ↓
-Informational / Low   → NOT_REQUIRED        (never exported)
-Medium / High          → PENDING_APPROVAL   (waits for analyst sign-off)
-Critical                → APPROVED           (auto-approved, exported immediately)
+```text
+TAXII_PASSWORD
+TAXII_USERNAME
+ALERT_ENGINE_INGEST_API_KEY
 ```
 
-`export_alert_to_taxii()` itself enforces this — it raises `StixExportError`
-unless `stix_export_status` is `APPROVED`, `EXPORTED`, or `FAILED` (the last
-two allow retrying an already-approved export without re-approval; `PENDING_APPROVAL`,
-`REJECTED`, and `NOT_REQUIRED` are all blocked). An analyst approves or
-rejects a pending export via:
+### API Authentication
 
-```
-POST /v1/alerts/{alert_id}/stix-export/approve
-POST /v1/alerts/{alert_id}/stix-export/reject
+If:
+
+```env
+ALERT_ENGINE_INGEST_API_KEY=your-secret-key
 ```
 
-Approval immediately attempts the export and updates the status to
-`EXPORTED`/`FAILED`; rejection just records the decision. `GET
-/v1/alerts/{alert_id}` returns the current alert, including its export status,
-for a dashboard/analyst UI to poll.
+is configured, requests must include:
 
-## Interface 2 — output contract
-
-`Alert.to_channel_payload()` returns the documented backend fields
-(`alert_id`, `fingerprint`, `source_id`, `watchlist_id`, `severity`,
-`confidence`, `state`, `first_seen`, `last_seen`, `count`) plus `channels`
-for the routing decision, `risk_breakdown`, `related_alert_ids`, and
-`stix_export_status`. Email/webhook/dashboard/SMS-push/SIEM teammates
-consume this payload; this module does not perform delivery.
-
-## Alert routing
-
-```
-Informational → batch_digest
-Low           → batch_digest + dashboard
-Medium        → dashboard (real-time) + email (daily digest)
-High          → dashboard + email + webhook
-Critical      → dashboard + email + webhook + sms_push + siem + on_call
+```http
+X-API-Key: your-secret-key
 ```
 
-STIX/TAXII is deliberately **not** in this channel list — it's governed
-entirely by the HITL gate above, independent of notification routing.
+### Auditability
 
-## Alert lifecycle
+Export approval/rejection decisions are recorded with an actor identifier.
 
-```
-new
-acknowledged
-investigating
-escalated     (time-based escalation per ESCALATION_POLICY, not a full-alert-lifecycle terminal state)
-dismissed     == the "False Positive" path
-closed        == "Resolved"
-```
+---
 
-The documented brief describes `New → Acknowledged → Investigating →
-Resolved/Closed` plus an alternate `New → False Positive` path. This
-implementation keeps its richer six-state machine (it also needed an explicit
-`Escalated` state for the escalation requirement); `dismissed` and `closed`
-are the exact equivalents of `False Positive` and `Resolved/Closed`
-respectively — see `LIFECYCLE_STATE_ALIASES` in `config.py`.
+# 🎯 Current Scope
 
-## Running the API
-
-```bash
-uvicorn alert_engine.api:app --reload
+```text
+🧠 Alert Decisioning
+📊 Risk Scoring
+🚦 Severity Classification
+♻️ Deduplication
+🔗 Correlation
+🔇 Suppression
+🔄 Lifecycle
+📢 Routing
+⏱️ Escalation
+🧩 STIX 2.1
+🌐 TAXII 2.1
+👤 HITL Approval
+📋 Export Status
+🧾 Export Auditing
 ```
 
-`POST /v1/findings` with an `X-API-Key` header (if `ALERT_ENGINE_INGEST_API_KEY`
-is set) and an enriched finding body. The endpoint evaluates the alert,
-persists it, and — only if `stix_export_status` is already `APPROVED`
-(i.e. critical severity) — immediately attempts the STIX/TAXII export.
-Medium/High alerts come back with `stix_export.pending_approval: true` and
-wait for the approve/reject endpoints above. The web framework binding is a
-thin wrapper; swap it for the team's actual framework once `main.py` / the
-dependency file confirm it, since `evaluate_alerts()` and
-`export_alert_to_taxii()` have no FastAPI dependency themselves.
+---
 
-## Security notes
+# 🚫 Out of Scope
 
-- All TAXII calls go over HTTPS with certificate verification on by default
-  (`TAXII_VERIFY_TLS`), a bounded timeout, and capped retries with backoff
-  only on transient status codes.
-- No secrets are hardcoded; TAXII credentials, the ingestion API key, and
-  database/broker URLs are all environment-driven (`.env.example`).
-- All database access goes through SQLAlchemy's parameterized query builder —
-  no raw string-interpolated SQL anywhere in the module.
-- Input validation is enforced at the boundary via pydantic; malformed
-  findings are rejected with a 422 before touching risk/severity logic.
-- External threat-intelligence publication is gated behind the HITL policy
-  above — a low-confidence or unreviewed finding can no longer reach an
-  external TAXII collection.
-- Alembic is wired up (`alembic.ini`, `migrations/`) so schema changes are
-  tracked rather than relying on `create_all` in production.
+This module does **not** perform:
 
-## Extending
+```text
+❌ Direct email/SMS/webhook delivery
+❌ Endpoint remediation
+❌ Automated takedown
+❌ Threat-actor de-anonymization
+❌ Unauthorized access to systems
+❌ CAPTCHA/access-control bypass
+❌ Autonomous attribution
+❌ Autonomous intent prediction
+❌ Illegal purchases
+❌ Public release of raw evidence
+```
 
-- Tune `THREAT_TYPE_WEIGHTS`, `INDICATOR_TYPE_WEIGHTS`, `RISK_SIGNAL_WEIGHTS`,
-  and `SOURCE_REPUTATION_SCORES` in `config.py` once the team's actual signal
-  catalogue is finalized.
-- Per-tenant severity thresholds: populate `TENANT_SEVERITY_THRESHOLDS` in
-  `config.py`, or move it to a database-backed lookup.
-- Correlation currently does an in-process relational scan
-  (`_CORRELATION_SCAN_LIMIT` in `correlation.py`) — if the entity graph grows
-  large, this is the natural place to swap in a real graph store (e.g. Neo4j,
-  per the wider architecture doc) without changing `engine.py`'s call site.
-- STIX/TAXII: `stix/mapping.py` currently maps indicators, observed data
-  (as STIX Cyber Observable Objects referenced via `object_refs`, per the
-  2.1 spec), and threat actors with `based-on` / `indicates` relationships.
-  Extend `_STIX_PATTERN_BUILDERS` and `_STIX_CYBER_OBSERVABLE_BUILDERS` for
-  additional indicator types as the enrichment team adds them.
-- HITL: `hitl.py`'s approve/reject functions are intentionally not
-  actor-attributed yet (no "who approved this" field) — add an `actor_id`
-  parameter and an audit row once the audit-log table exists.
+---
+
+# 🧱 Design Principles
+
+| Principle | Implementation |
+|---|---|
+| 🔍 Explainability | Per-signal risk breakdown |
+| 👤 Human oversight | HITL for Medium/High export |
+| 🔐 Security | API key + HTTPS TAXII |
+| ♻️ Noise reduction | Deduplication + suppression |
+| 🔗 Context | Alert correlation |
+| 📋 Standardization | STIX 2.1 |
+| 🌐 Interoperability | TAXII 2.1 |
+| 🧾 Auditability | Export decision/status tracking |
+| ⚙️ Configurability | Environment + tenant policies |
+
+---
+
+# 🏁 End-to-End Summary
+
+```text
+                    ┌─────────────────────┐
+                    │  🧠 ENRICHED FINDING │
+                    └──────────┬──────────┘
+                               ↓
+                    ┌─────────────────────┐
+                    │ 📊 RISK ENGINE      │
+                    │    9 Signals        │
+                    └──────────┬──────────┘
+                               ↓
+                    ┌─────────────────────┐
+                    │ 🚦 SEVERITY         │
+                    │ Info → Critical     │
+                    └──────────┬──────────┘
+                               ↓
+             ┌─────────────────────────────────┐
+             │ ♻️ Dedup → 🔗 Correlation      │
+             │ 🔇 Suppression → 🔄 Lifecycle  │
+             └────────────────┬────────────────┘
+                              ↓
+                    ┌─────────────────────┐
+                    │ 🚨 STANDARD ALERT   │
+                    └──────────┬──────────┘
+                               ↓
+                    ┌─────────────────────┐
+                    │ 📢 ROUTING +        │
+                    │ ⏱️ ESCALATION       │
+                    └──────────┬──────────┘
+                               ↓
+                    ┌─────────────────────┐
+                    │ 👤 HITL / POLICY    │
+                    └──────────┬──────────┘
+                               ↓
+                    ┌─────────────────────┐
+                    │ 🧩 STIX 2.1         │
+                    └──────────┬──────────┘
+                               ↓
+                    ┌─────────────────────┐
+                    │ 🌐 TAXII 2.1        │
+                    └──────────┬──────────┘
+                               ↓
+                    ┌─────────────────────┐
+                    │ 🛡️ SECURITY PLATFORM│
+                    └─────────────────────┘
+```
+
+<div align="center">
+
+### 🛡️ Alert Logic & STIX/TAXII
+**Turning enriched threat intelligence into explainable, actionable, interoperable security alerts.**
+
+</div>
