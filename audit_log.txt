@@ -4,3 +4,11 @@
 [2026-09-25 08:45:27 UTC] [SUCCESS] channel=email | [HIGH] alr_005 | subject=[HIGH] DarkTrace alert alr_005 | detail=dry-run (no SMTP configured)
 [2026-09-25 08:45:27 UTC] [SUCCESS] channel=email | [HIGH] alr_006 | subject=[HIGH] DarkTrace alert alr_006 | detail=dry-run (no SMTP configured)
 [2026-09-25 08:46:27 UTC] [SUCCESS] channel=email | Daily Digest -- Low/Informational Alerts | subject=[BATCH] Daily Digest -- Low/Informational Alerts -- 6 alert(s) | detail=dry-run (no SMTP configured)
+[2026-09-25 08:50:27 UTC] [SUCCESS] channel=email | Medium Severity Alerts (batched) | subject=[BATCH] Medium Severity Alerts (batched) -- 3 alert(s) | detail=dry-run (no SMTP configured)
+[2026-09-25 08:54:52 UTC] [FAILED] channel=email | [HIGH] alr_005 | subject=[HIGH] DarkTrace alert alr_005 | detail=(550, b'5.7.0 Too many emails per second. Please upgrade your plan https://mailtrap.io/billing/plans/testing')
+[2026-09-25 08:54:52 UTC] [FAILED] channel=email | [HIGH] alr_004 | subject=[HIGH] DarkTrace alert alr_004 | detail=(550, b'5.7.0 Too many emails per second. Please upgrade your plan https://mailtrap.io/billing/plans/testing')
+[2026-09-25 08:54:52 UTC] [SUCCESS] channel=email | [CRITICAL] alr_001 | subject=[CRITICAL] DarkTrace alert alr_001
+[2026-09-25 08:54:52 UTC] [FAILED] channel=email | [CRITICAL] alr_003 | subject=[CRITICAL] DarkTrace alert alr_003 | detail=(550, b'5.7.0 Too many emails per second. Please upgrade your plan https://mailtrap.io/billing/plans/testing')
+[2026-09-25 08:54:56 UTC] [FAILED] channel=email | [HIGH] alr_006 | subject=[HIGH] DarkTrace alert alr_006 | detail=(550, b'5.7.0 Too many emails per second. Please upgrade your plan https://mailtrap.io/billing/plans/testing')
+[2026-09-25 08:55:53 UTC] [SUCCESS] channel=email | Daily Digest -- Low/Informational Alerts | subject=[BATCH] Daily Digest -- Low/Informational Alerts -- 6 alert(s)
+[2026-09-25 08:59:58 UTC] [SUCCESS] channel=email | Medium Severity Alerts (batched) | subject=[BATCH] Medium Severity Alerts (batched) -- 3 alert(s)
