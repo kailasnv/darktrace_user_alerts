@@ -9,6 +9,8 @@ Also, this project uses Celery + Redis for background email sending — Redis qu
 
 Implemented Jinja2 templating engine + MJML for building HTML emails that actually render correctly across Outlook/Gmail/Apple Mail
 
+Also it logs every delivery attempt (success or failure) to the audit trail (audit_log.txt). 
+
 ----
 ### To run this program: 
 start Redis (if not already running):  -- (please use multiple terminals for this)
@@ -44,6 +46,7 @@ install these
         pip install celery redis
         sudo pacman -S redis
         pip install jinja2
+        pip install dotenv
 
 Start these:
 
