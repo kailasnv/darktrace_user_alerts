@@ -1,11 +1,14 @@
+import hashlib
 import json
 import time
+import uuid
+from datetime import datetime, timezone
 
 import httpx
 import redis
 
 from app.database import SessionLocal
-from app.models import WebhookDelivery
+from app.models import AuditEvent
 from signer import generate_signature, SIGNATURE_HEADER
 
 
@@ -37,19 +40,58 @@ def record_delivery(
     db = SessionLocal()
 
     try:
-        delivery = WebhookDelivery(
-            alert_id=alert_id,
-            webhook_url=url,
-            attempt_number=attempt_number,
-            status_code=status_code,
-            status=status,
-            error_message=error_message,
-            created_at=__import__("datetime").datetime.now(
-                __import__("datetime").timezone.utc
-            ),
+        previous_event = (
+            db.query(AuditEvent)
+            .order_by(AuditEvent.seq.desc())
+            .first()
         )
 
-        db.add(delivery)
+        prev_hash = (
+            previous_event.entry_hash
+            if previous_event
+            else "0" * 64
+        )
+
+        event_id = str(uuid.uuid4())
+        occurred_at = datetime.now(timezone.utc)
+
+        details = {
+            "url": url,
+            "attempt_number": attempt_number,
+            "status_code": status_code,
+            "status": status,
+        }
+
+        if error_message is not None:
+            details["error_message"] = error_message
+
+        hash_input = (
+            f"{prev_hash}|"
+            f"{event_id}|"
+            f"system|"
+            f"webhook_delivery|"
+            f"{alert_id}|"
+            f"{json.dumps(details, sort_keys=True, separators=(',', ':'))}|"
+            f"{occurred_at.isoformat()}"
+        )
+
+        entry_hash = hashlib.sha256(
+            hash_input.encode("utf-8")
+        ).hexdigest()
+
+        audit_event = AuditEvent(
+            event_id=event_id,
+            actor_usr="system",
+            action="webhook_delivery",
+            object_type="alert",
+            object_id=alert_id,
+            details=details,
+            prev_hash=prev_hash,
+            entry_hash=entry_hash,
+            occurred_at=occurred_at,
+        )
+
+        db.add(audit_event)
         db.commit()
 
     finally:
