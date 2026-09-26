@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import schedule
 
 from delivery import send_webhook
 
@@ -10,7 +11,15 @@ app = Celery(
     broker="redis://127.0.0.1:6379/0",
     backend="redis://127.0.0.1:6379/0",
 )
+# schedular for alert scan
 
+app.conf.beat_schedule = {
+    "scan-alerts-every-10-seconds": {
+        "task": "celery_app.scan_alerts",
+        "schedule": schedule(10.0),
+        "args": ("test_webhook_002",),
+    },
+}
 
 @app.task(bind=True, max_retries=3)
 def deliver_webhook(
@@ -66,3 +75,15 @@ def deliver_webhook(
             exc=exc,
             countdown=2 ** retry_count,
         )
+      
+      
+@app.task
+def scan_alerts(endpoint_id: str) -> None:
+    from app.api.webhooks import process_alerts
+
+    print(
+        f"Scanning SQLite alerts for endpoint={endpoint_id}"
+    )
+
+    process_alerts(endpoint_id)
+        

@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from app.models.base import Base
-from app.models import AuditEvent, WebhookEndpoint
+from app.models import Alert,AuditEvent, WebhookEndpoint
 
 
 config = context.config
