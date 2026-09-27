@@ -1,0 +1,11 @@
+{
+  "alert_id": "alr_demo_100",
+  "fingerprint": "fp_demo_100",
+  "severity": "high",
+  "confidence": 0.92,
+  "source": "Authorized-Test-Feed",
+  "summary": "Test threat intelligence alert",
+  "channel": "both",
+  "phone_number": "+91xxxxxxxxxx",
+  "fcm_token": "YOUR_TEST_FCM_TOKEN"
+}
