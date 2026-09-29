@@ -73,3 +73,9 @@ Never edit .html files directly. Always edit .mjml source, then recompile, when 
         mjml templates/mjml_src/critical.mjml -o templates/critical.html
 
 ----
+
+### Now uses Mailtrap (free plan for testing emails in a sandbox)
+
+For actual production, switch to a real `transactional email provider` (Mailtrap's own separate "Email API/SMTP" product, or something like SendGrid/Amazon SES/Postmark) built for real send volume
+
+----
