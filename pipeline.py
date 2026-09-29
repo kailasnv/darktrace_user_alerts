@@ -100,16 +100,16 @@ def process_and_dispatch(alerts, already_processed=None):
  
         if alert["severity"] in ("critical", "high"):
             send_immediate_email_task.delay(alert)
-            print(cyan(f"[+] Queued immediate email for {alert['alert_id']}"))
+            print(blue(f"[+] Queued immediate email for {alert['alert_id']}"))
         elif alert["severity"] == "medium":
             medium_batch.append(alert)
-            print(cyan(f"[+] Added {alert['alert_id']} to the medium batch"))
+            print(blue(f"[+] Added {alert['alert_id']} to the medium batch"))
         else:
             digest_batch.append(alert)
-            print(cyan(f"[+] Added {alert['alert_id']} to the digest batch"))
+            print(blue(f"[+] Added {alert['alert_id']} to the digest batch"))
  
         newly_dispatched.append(alert["alert_id"])
-        print(gray("====================================================================\n"))
+        print(magenta("====================================================================\n"))
  
     if medium_batch:
         send_batched_medium_task.apply_async(args=[medium_batch], countdown=MEDIUM_BATCH_DELAY_SECONDS)

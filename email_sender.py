@@ -9,7 +9,7 @@ load_dotenv()
  
 from email_templates import render_email, render_batch_email
 from audit_log import log_delivery
-from utils.terminal_colors import cyan, green, red 
+from utils.terminal_colors import cyan, green, red
 
 
 SMTP_HOST = os.getenv("SMTP_HOST", "")
@@ -25,8 +25,8 @@ EMAIL_TO = os.getenv("EMAIL_TO", "")
 def send_raw(subject: str, body: str, label: str = ""):
     #if SMTP isnot configued, just run a DRY run for testing.
     if not SMTP_HOST:
-        print(cyan(f"[+] ---- DRY RUN EMAIL {label} ----"))
-        print(cyan(f"[+] To: {EMAIL_TO}\nSubject: {subject}\n\n"))
+        print(green(f"[+] ---- DRY RUN EMAIL {label} ----"))
+        print(green(f"[+] To: {EMAIL_TO}\nSubject: {subject}\n\n"))
         log_delivery("email", label, subject, success=True, detail="dry-run (no SMTP configured)") # DRY run is for testing. so that why i gave success=true. (no real email is sent)
         return True
 
