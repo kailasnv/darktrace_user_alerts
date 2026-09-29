@@ -10,7 +10,7 @@ celery_app = Celery(
     "email_alerting",
     broker=REDIS_URL,
     backend=REDIS_URL,
-    include=["tasks"],  # tells the worker to import tasks.py and register its tasks
+    include=["tasks", "pipeline"],  # tells the worker to import both and register their tasks
 )
  
 celery_app.conf.update(
@@ -22,3 +22,13 @@ celery_app.conf.update(
 )
  
 
+# Automatic trigger: runs the alert pipeline every 30 seconds without
+# anyone manually running main.py. 
+# Needs `celery -A celery_app beat`  # running alongside the worker.
+
+celery_app.conf.beat_schedule = {
+    "run-alert-pipeline": {
+        "task": "pipeline.run_pipeline_task",
+        "schedule": 60.0,
+    },
+}
