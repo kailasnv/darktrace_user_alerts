@@ -120,16 +120,35 @@ def process_and_dispatch(alerts, already_processed=None):
     return newly_dispatched
  
  
-# --- Automatic trigger ---
+# --- Automatic trigger ---  --- -- -- -- 
 """ This set lives in the worker's memory and persists across every scheduled run, AS LONG AS the worker process itself isn't restarted. 
 If the worker restarts, this resets and one duplicate round of emails is possible -- acceptable for a demo, 
 """
-_already_processed = set()
+import os
+import redis
+ 
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+_redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+PROCESSED_KEY = "darktrace:already_processed_alert_ids"
+ 
+ 
+class RedisProcessedSet:
+    """Drop-in replacement for a Python set (supports `in` and .update()),
+    but backed by a Redis set so every worker process sees the same data."""
+ 
+    def __contains__(self, alert_id):
+        return _redis_client.sismember(PROCESSED_KEY, alert_id)
+ 
+    def update(self, alert_ids):
+        if alert_ids:
+            _redis_client.sadd(PROCESSED_KEY, *alert_ids)
+ 
+ 
+_already_processed = RedisProcessedSet()
  
  
 @celery_app.task
 def run_pipeline_task():
-    global _already_processed
     newly = process_and_dispatch(ALERTS, already_processed=_already_processed)
     _already_processed.update(newly)
     if not newly:

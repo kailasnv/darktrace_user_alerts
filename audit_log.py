@@ -7,7 +7,7 @@ import os
 from datetime import datetime, timezone
 
 #file for logging
-LOG_FILE = os.path.join(os.path.dirname(__file__), "audit_log.txt")
+LOG_FILE = os.path.join(os.path.dirname(__file__), "audit_logs.txt")
 
 
 

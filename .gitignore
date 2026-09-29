@@ -5,6 +5,6 @@ __pycache__/
 venv/
 *.egg-info/
 .DS_Store
-audit_log.txt
+audit_logs.txt
 celerybeat-schedule*
 
