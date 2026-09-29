@@ -6,6 +6,8 @@ call this same function, so there's never two competing copies.
 from hardcoded_alerts import ALERTS  # hardcoded alerts for testing purposes
 from tasks import send_immediate_email_task, send_batched_medium_task, send_daily_digest_task
 from celery_app import celery_app
+
+from utils.terminal_colors import blue, cyan, magenta, gray
  
 
 # severity ranking +  channel map.
@@ -73,10 +75,10 @@ def process_and_dispatch(alerts, already_processed=None):
     Returns the list of alert_ids actually dispatched this run. 
     ------------------------------------------------------------ """
  
-    print(f"[+] Starting with {len(alerts)} raw alerts.\n")
+    print(blue(f"[+] Starting with {len(alerts)} raw alerts.\n"))
  
     deduped = dedupe_alerts(alerts)
-    print(f"[+] {len(deduped)} unique alerts after dedup.\n")
+    print(blue(f"[+] {len(deduped)} unique alerts after dedup.\n"))
  
     deduped.sort(key=lambda a: SEVERITY_RANK[a["severity"]])  # sort based on severity ranks
  
@@ -89,33 +91,33 @@ def process_and_dispatch(alerts, already_processed=None):
             continue  # already handled by an earlier scheduled run
  
         channels = SEVERITY_CHANNELS[alert["severity"]]
-        print(f"[+] Alert: {alert['alert_id']} [{alert['severity'].upper()}] | channels: {channels}")
+        print(blue(f"[+] Alert: {alert['alert_id']} [{alert['severity'].upper()}] | channels: {channels}"))
  
         if "email" not in channels:
-            print(f"[+] Skipping email for {alert['alert_id']} -- not in its channel list")
-            print("====================================================================\n")
+            print(gray(f"[+] Skipping email for {alert['alert_id']} -- not in its channel list"))
+            print(gray("====================================================================\n"))
             continue
  
         if alert["severity"] in ("critical", "high"):
             send_immediate_email_task.delay(alert)
-            print(f"[+] Queued immediate email for {alert['alert_id']}")
+            print(cyan(f"[+] Queued immediate email for {alert['alert_id']}"))
         elif alert["severity"] == "medium":
             medium_batch.append(alert)
-            print(f"[+] Added {alert['alert_id']} to the medium batch")
+            print(cyan(f"[+] Added {alert['alert_id']} to the medium batch"))
         else:
             digest_batch.append(alert)
-            print(f"[+] Added {alert['alert_id']} to the digest batch")
+            print(cyan(f"[+] Added {alert['alert_id']} to the digest batch"))
  
         newly_dispatched.append(alert["alert_id"])
-        print("====================================================================\n")
+        print(gray("====================================================================\n"))
  
     if medium_batch:
         send_batched_medium_task.apply_async(args=[medium_batch], countdown=MEDIUM_BATCH_DELAY_SECONDS)
-        print(f"[+] Scheduled batched medium email for {len(medium_batch)} alert(s) in {MEDIUM_BATCH_DELAY_SECONDS}s")
+        print(magenta(f"[+] Scheduled batched medium email for {len(medium_batch)} alert(s) in {MEDIUM_BATCH_DELAY_SECONDS}s"))
  
     if digest_batch:
         send_daily_digest_task.apply_async(args=[digest_batch], countdown=DIGEST_DELAY_SECONDS)
-        print(f"[+] Scheduled digest email for {len(digest_batch)} alert(s) in {DIGEST_DELAY_SECONDS}s")
+        print(magenta(f"[+] Scheduled digest email for {len(digest_batch)} alert(s) in {DIGEST_DELAY_SECONDS}s"))
  
     return newly_dispatched
  
@@ -152,4 +154,4 @@ def run_pipeline_task():
     newly = process_and_dispatch(ALERTS, already_processed=_already_processed)
     _already_processed.update(newly)
     if not newly:
-        print("[+] Scheduled run: nothing new -- all alerts already processed.")
+        print(gray("[+] Scheduled run: nothing new -- all alerts already processed."))

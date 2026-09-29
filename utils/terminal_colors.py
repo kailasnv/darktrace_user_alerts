@@ -1,5 +1,5 @@
 """
-ANSI color helpers for terminal print() output ONLY.
+ANSI color helpers for terminal print() output ONLY -- colors make easy to read outputs.
 """
 RESET = "\033[0m"
 BOLD = "\033[1m"

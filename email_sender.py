@@ -9,6 +9,7 @@ load_dotenv()
  
 from email_templates import render_email, render_batch_email
 from audit_log import log_delivery
+from utils.terminal_colors import cyan, green, red 
 
 
 SMTP_HOST = os.getenv("SMTP_HOST", "")
@@ -24,13 +25,13 @@ EMAIL_TO = os.getenv("EMAIL_TO", "")
 def send_raw(subject: str, body: str, label: str = ""):
     #if SMTP isnot configued, just run a DRY run for testing.
     if not SMTP_HOST:
-        print(f"[+] ---- DRY RUN EMAIL {label} ----")
-        print(f"[+] To: {EMAIL_TO}\nSubject: {subject}\n\n")
+        print(cyan(f"[+] ---- DRY RUN EMAIL {label} ----"))
+        print(cyan(f"[+] To: {EMAIL_TO}\nSubject: {subject}\n\n"))
         log_delivery("email", label, subject, success=True, detail="dry-run (no SMTP configured)") # DRY run is for testing. so that why i gave success=true. (no real email is sent)
         return True
 
     if not EMAIL_TO:
-        print(f"[FAILED] {label} email error: EMAIL_TO is not set in .env")
+        print(red(f"[FAILED] {label} email error: EMAIL_TO is not set in .env"))
         log_delivery("email", label, subject, success=False, detail="EMAIL_TO not set")
         return False
 
@@ -43,11 +44,11 @@ def send_raw(subject: str, body: str, label: str = ""):
             server.starttls()
             server.login(SMTP_USER, SMTP_PASSWORD)
             server.sendmail(EMAIL_FROM, [EMAIL_TO], msg.as_string())
-        print(f"[sent] {label} email delivered.")
+        print(green(f"[sent] {label} email delivered."))
         log_delivery("email", label, subject, success=True) 
         return True
     except Exception as exc:
-        print(f"[FAILED] {label} email error: {exc}")
+        print(red(f"[FAILED] {label} email error: {exc}"))
         log_delivery("email", label, subject, success=False, detail=str(exc)) # logging exception
         return False
 
