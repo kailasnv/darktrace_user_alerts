@@ -11,27 +11,34 @@ Implemented Jinja2 templating engine + MJML for building HTML emails that actual
 
 Also it logs every delivery attempt (success or failure) to the audit trail (audit_log.txt). 
 
+
+Implemented an automatic Celery Beat trigger that re-runs the alert pipeline every 30 seconds, dispatching any alert it hasn't already processed (tracked in memory) without needing running the program manually.
+
 ----
 ### To run this program: 
-start Redis (if not already running):  -- (please use multiple terminals for this)
+start Redis (if not already running):
 
         redis-server --daemonize yes
 
-start the worker, stays running:
+start the worker (stays running):
 
         celery -A celery_app worker --loglevel=info
 
-*Confirm you see the [tasks] list with all 3 tasks
+*Confirm you see the [tasks] list with all 4 tasks
 
-Run the main script:
+start the celery beat on another terminal  (stays running): 
 
-        python3 main.py
+        celery -A celery_app beat --loglevel=info
+
+
+[ Notes: while running commands activate the python virtual environment:  source venv/bin/activate ]
+
 
 ----
 ### Result
 - The critical + High alerts are immediatly send. (duplicates are removed)
 - Medium alerts are Batched and send after a certain delay (now its set to 5min demo)
-- Low + informational alerts are Batched and send after a certain delay (demo set to 1minutes)
+- Low + informational alerts are Batched and send after a certain delay (demo set to 6minutes)
 
 -----
 ### SMPT setup

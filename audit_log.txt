@@ -47,3 +47,5 @@
 [2026-09-29 05:31:22 UTC] [SUCCESS] channel=email | [HIGH] alr_004 | subject=[HIGH] DarkTrace alert alr_004 | detail=dry-run (no SMTP configured)
 [2026-09-29 05:31:22 UTC] [SUCCESS] channel=email | [HIGH] alr_006 | subject=[HIGH] DarkTrace alert alr_006 | detail=dry-run (no SMTP configured)
 [2026-09-29 05:31:22 UTC] [SUCCESS] channel=email | [HIGH] alr_005 | subject=[HIGH] DarkTrace alert alr_005 | detail=dry-run (no SMTP configured)
+[2026-09-29 05:36:22 UTC] [SUCCESS] channel=email | Medium Severity Alerts (batched) | subject=[BATCH] Medium Severity Alerts (batched) -- 3 alert(s) | detail=dry-run (no SMTP configured)
+[2026-09-29 05:37:22 UTC] [SUCCESS] channel=email | Daily Digest -- Low/Informational Alerts | subject=[BATCH] Daily Digest -- Low/Informational Alerts -- 6 alert(s) | detail=dry-run (no SMTP configured)
