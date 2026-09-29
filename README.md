@@ -16,17 +16,17 @@ Implemented an automatic Celery Beat trigger that re-runs the alert pipeline eve
 
 ----
 ### To run this program: 
-start Redis (if not already running):
+1. start Redis (if not already running):
 
         redis-server --daemonize yes
 
-start the worker (stays running):  (if rerunning, FLUSH ALL previous redis queue, command is: `redis-cli FLUSHALL` )
+2. start the worker (stays running):  (if rerunning, FLUSH ALL previous redis queue, command is: `redis-cli FLUSHALL` )
 
         celery -A celery_app worker --loglevel=info
 
 *Confirm you see the [tasks] list with all 4 tasks
 
-start the celery beat on another terminal  (stays running): 
+3. start the celery beat on another terminal  (stays running): 
 
         celery -A celery_app beat --loglevel=info
 
