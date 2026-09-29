@@ -63,6 +63,9 @@ To wipes any stale queued tasks or old task results sitting in Redis, without sh
 
         redis-cli FLUSHALL
 
+Clear the stale tracking so it starts fresh: 
+
+        redis-cli del darktrace:already_processed_alert_ids
 
 
 Never edit .html files directly. Always edit .mjml source, then recompile, when redesign templates:
