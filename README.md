@@ -20,7 +20,7 @@ start Redis (if not already running):
 
         redis-server --daemonize yes
 
-start the worker (stays running):
+start the worker (stays running):  (if rerunning, FLUSH ALL previous redis queue, command is: `redis-cli FLUSHALL` )
 
         celery -A celery_app worker --loglevel=info
 
@@ -31,7 +31,7 @@ start the celery beat on another terminal  (stays running):
         celery -A celery_app beat --loglevel=info
 
 
-[ Notes: while running commands activate the python virtual environment:  source venv/bin/activate ]
+[ Notes: while running commands activate the python virtual environment:  `source venv/bin/activate` ]
 
 
 ----
