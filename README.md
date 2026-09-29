@@ -12,7 +12,7 @@ Implemented Jinja2 templating engine + MJML for building HTML emails that actual
 Also it logs every delivery attempt (success or failure) to the audit trail (audit_log.txt). 
 
 
-Implemented an automatic Celery Beat trigger that re-runs the alert pipeline every 30 seconds, dispatching any alert it hasn't already processed (tracked in memory) without needing running the program manually.
+Implemented an automatic Celery Beat trigger that re-runs the alert pipeline every 10 seconds, dispatching any alert it hasn't already processed (tracked in memory) without needing running the program manually.
 
 ----
 ### To run this program: 

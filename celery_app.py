@@ -22,13 +22,13 @@ celery_app.conf.update(
 )
  
 
-# Automatic trigger: runs the alert pipeline every 30 seconds without
+# Automatic trigger: runs the alert pipeline every 10 seconds without
 # anyone manually running main.py. 
 # Needs `celery -A celery_app beat`  # running alongside the worker.
 
 celery_app.conf.beat_schedule = {
     "run-alert-pipeline": {
         "task": "pipeline.run_pipeline_task",
-        "schedule": 60.0,
+        "schedule": 10.0, # interval
     },
 }
